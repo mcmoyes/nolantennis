@@ -39,6 +39,7 @@ export default class GameScene extends Phaser.Scene {
 		this.load.audio("bleep", "assets/bloopier.mp3");
 		this.load.audio("bwaaah", "assets/shortbwaaah.mp3");
 		this.load.image("pixel", "assets/pixel.png");
+		this.load.image("circle", "assets/circle.png");
 		this.load.atlas("flares", "assets/flares.png", "assets/flares.json");
 	}
 
@@ -94,7 +95,18 @@ export default class GameScene extends Phaser.Scene {
 		// this.cameras.main.setZoom(this.initialZoom, this.initialZoom);
 		this.resetCamera();
 		this.timeBender = new TimeBender(this, this.createInvertedBall.bind(this));
-		this.nastyBullet = false;
+		this.nastyBullet = true;
+		// set up something for nasty bullets to bounce up against at the bottom.
+		this.nastyBouncer = this.add.rectangle(
+			WIDTH / 2,
+			HEIGHT + 20,
+			WIDTH,
+			40,
+			0x333333,
+			0
+		);
+		this.physics.add.existing(this.nastyBouncer);
+		this.nastyBouncer.body.setImmovable();
 	}
 
 	bendTime() {
@@ -109,13 +121,24 @@ export default class GameScene extends Phaser.Scene {
 			// disable this collision for all non-reversing balls
 			this.bullets.forEach((bullet) => {
 				const type = bullet.getData("type");
+				const bulletId = bullet.getData("id");
 				if (type !== "inverted-nasty") {
-					const collider = colliderMap[bullet.getData("id")];
+					const collider = colliderMap[bulletId];
 					if (collider) {
 						if (type === "main") {
 							this.physics.world.removeCollider(collider);
 						}
 					}
+				} else {
+					// add collider for inverted-nasty
+					colliderMap[bulletId] = this.physics.add.collider(
+						bullet,
+						brick,
+						this.hitBrick,
+						null,
+						this
+					);
+					brick.setData("colliderMap", colliderMap);
 				}
 			});
 			// brick.body.enable = false;
@@ -138,6 +161,8 @@ export default class GameScene extends Phaser.Scene {
 					null,
 					this
 				);
+				this.physics.world.removeCollider(colliderMap[ball.getData("id")]);
+				brick.setData("colliderMap", colliderMap);
 			}
 		}
 
@@ -173,7 +198,10 @@ export default class GameScene extends Phaser.Scene {
 
 		this.bricks.forEach((brick) => {
 			const colliderMap = brick.getData("colliderMap");
-			if ((type === "main" && brick.alpha == 1) || type === "inverted-nasty") {
+			if (
+				(type === "main" && brick.alpha == 1) ||
+				(type === "inverted-nasty" && brick.alpha === 0)
+			) {
 				colliderMap[this.ballCounter] = this.physics.add.collider(
 					ball,
 					brick,
@@ -201,6 +229,10 @@ export default class GameScene extends Phaser.Scene {
 			null,
 			this
 		);
+
+		if (type === "inverted-nasty") {
+			this.physics.add.collider(ball, this.nastyBouncer, null, null, this);
+		}
 		return ball;
 	}
 

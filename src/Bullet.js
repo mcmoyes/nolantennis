@@ -40,6 +40,19 @@ export default class Bullet extends Phaser.GameObjects.Arc {
 				on: false,
 			});
 		}
+		if (type == "inverted-nasty") {
+			var particles = this.scene.add.particles("circle");
+			this.emitter = particles.createEmitter({
+				lifespan: 500,
+				speed: 0,
+				scale: { start: 0.1, end: 0 },
+				alpha: 0.5,
+				quantity: 1,
+				blendMode: "NORMAL",
+				follow: this,
+				on: true,
+			});
+		}
 	}
 
 	startTrail(ms) {
