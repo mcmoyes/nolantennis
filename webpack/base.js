@@ -37,4 +37,7 @@ module.exports = {
 			template: "./index.html",
 		}),
 	],
+	devServer: {
+		contentBase: ["./public"],
+	},
 };

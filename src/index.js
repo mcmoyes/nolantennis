@@ -31,9 +31,9 @@ class CNT extends Phaser.Scene {
 	}
 
 	preload() {
-		this.load.audio("bloop", "src/assets/bloop.mp3");
-		this.load.audio("bleep", "src/assets/bloopier.mp3");
-		this.load.audio("bwaaah", "src/assets/shortbwaaah.mp3");
+		this.load.audio("bloop", "assets/bloop.mp3");
+		this.load.audio("bleep", "assets/bloopier.mp3");
+		this.load.audio("bwaaah", "assets/shortbwaaah.mp3");
 	}
 
 	create() {
