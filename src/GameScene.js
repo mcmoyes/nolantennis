@@ -95,7 +95,7 @@ export default class GameScene extends Phaser.Scene {
 		// this.cameras.main.setZoom(this.initialZoom, this.initialZoom);
 		this.resetCamera();
 		this.timeBender = new TimeBender(this, this.createInvertedBall.bind(this));
-		this.nastyBullet = true;
+		this.nastyBullet = false;
 		// set up something for nasty bullets to bounce up against at the bottom.
 		this.nastyBouncer = this.add.rectangle(
 			WIDTH / 2,
