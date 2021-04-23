@@ -9,6 +9,7 @@ export default class TimeBender {
 		this.isBending = false;
 		this.startTime = 0;
 		this.bullets = [];
+		this.triggeredComplete = false;
 	}
 
 	bendTime(bullets) {
@@ -24,14 +25,22 @@ export default class TimeBender {
 	onBent() {
 		this.isBending = false;
 		this.scene.physics.world.timeScale = 1;
-
-		this.onComplete();
 	}
 
 	update(time, delta) {
 		if (this.isBending) {
-			if (time > this.startTime + SLOWDOWN_DURATION) {
+			// trigger the complete a bit early so we see a bit of the balls splitting in slowmo
+			if (
+				!this.triggeredComplete &&
+				time > this.startTime + SLOWDOWN_DURATION
+			) {
+				this.onComplete();
+				this.triggeredComplete = true;
+				return;
+			}
+			if (time > this.startTime + SLOWDOWN_DURATION + 400) {
 				this.onBent();
+				this.triggeredComplete = false;
 				return;
 			}
 		}

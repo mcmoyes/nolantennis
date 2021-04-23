@@ -28,13 +28,18 @@ const BALL_INIT = {
 
 export default class GameScene extends Phaser.Scene {
 	constructor() {
-		super();
+		super({ key: "GameScene" });
 	}
 
+	init(data) {
+		this.initialZoom = data.zoom;
+	}
 	preload() {
 		this.load.audio("bloop", "assets/bloop.mp3");
 		this.load.audio("bleep", "assets/bloopier.mp3");
 		this.load.audio("bwaaah", "assets/shortbwaaah.mp3");
+		this.load.image("pixel", "assets/pixel.png");
+		this.load.atlas("flares", "assets/flares.png", "assets/flares.json");
 	}
 
 	create() {
@@ -45,6 +50,18 @@ export default class GameScene extends Phaser.Scene {
 		};
 		this.invertedBullets = [];
 		this.paddle = new Paddle(this);
+
+		var particles = this.add.particles("pixel");
+
+		this.emitter = particles.createEmitter({
+			lifespan: 400,
+			speed: { min: -200, max: 200 },
+			angle: { min: 0, max: 180 },
+			scale: { start: 0.2, end: 0.4, ease: "Quad.easeOut" },
+			alpha: { start: 1, end: 0.1, ease: "Quad.easeIn" },
+			blendMode: "NORMAL",
+			on: false,
+		});
 
 		//  Enable world bounds, but disable the floor
 		this.physics.world.setBoundsCollision(true, true, true, false);
@@ -71,6 +88,7 @@ export default class GameScene extends Phaser.Scene {
 			loop: false,
 		};
 		this.cameras.main.setBounds(0, 0, WIDTH, HEIGHT);
+		// this.cameras.main.setZoom(this.initialZoom, this.initialZoom);
 		this.resetCamera();
 		this.timeBender = new TimeBender(this, this.createInvertedBall.bind(this));
 	}
@@ -88,6 +106,10 @@ export default class GameScene extends Phaser.Scene {
 		// this.physics.world.timeScale = 2;
 		if (this.bricks.every((brick) => brick.alpha == 0)) {
 			this.resetLevel();
+		}
+		if (ball.getData("type") != "main") {
+			this.emitter.explode(20, brick.x, brick.y);
+			ball.fireball();
 		}
 	}
 
@@ -110,9 +132,13 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	createBall(x, y, type = "main") {
-		const color = type === "main" ? 0xffffff : AMBER; //;
+		const color = type === "main" ? 0xffffff : GREEN; //;
 		const ball = new Bullet(this, x, y, BALL_INIT.radius, color, 1, type);
-		this.physics.add.collider(ball, this.bricks, this.hitBrick, null, this);
+		if (type == "main") {
+			this.physics.add.collider(ball, this.bricks, this.hitBrick, null, this);
+		} else {
+			this.physics.add.overlap(ball, this.bricks, this.hitBrick, null, this);
+		}
 		this.physics.add.collider(
 			ball,
 			this.paddle.gameObject,
@@ -190,7 +216,6 @@ export default class GameScene extends Phaser.Scene {
 		this.timeBender.reset();
 		this.resetCamera();
 	}
-
 	resetLevel() {
 		this.resetBalls();
 
@@ -205,8 +230,8 @@ export default class GameScene extends Phaser.Scene {
 		const newBall = this.createBall(this.ball.x, this.ball.y, "inverted");
 		this.invertedBullets.push(newBall);
 
-		newBall.body.setVelocityX(-this.ball.body.velocity.x / 2);
-		newBall.body.setVelocityY(-this.ball.body.velocity.y / 2);
+		newBall.body.setVelocityX(-this.ball.body.velocity.x * 0.75);
+		newBall.body.setVelocityY(-this.ball.body.velocity.y * 0.75);
 		newBall.alpha = 0.7;
 		// this.physics.world.timeScale = 2;
 		this.timer = this.time.addEvent(this.timerConfig);
