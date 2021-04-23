@@ -11,7 +11,7 @@ const config = {
 		height: 400,
 		mode: Phaser.Scale.FIT,
 	},
-	scene: GameScene, //[IntroScene, GameScene],
+	scene: [IntroScene, GameScene],
 	physics: {
 		default: "arcade",
 	},

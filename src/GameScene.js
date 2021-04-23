@@ -48,7 +48,7 @@ export default class GameScene extends Phaser.Scene {
 			bloop: this.sound.add("bloop"),
 			bwaaah: this.sound.add("bwaaah"),
 		};
-		this.invertedBullets = [];
+		this.bullets = [];
 		this.paddle = new Paddle(this);
 
 		var particles = this.add.particles("pixel");
@@ -68,10 +68,13 @@ export default class GameScene extends Phaser.Scene {
 
 		this.createBricks();
 
+		this.ballCounter = 0;
+
 		this.ball = this.createBall(
 			this.paddle.gameObject.x,
 			this.paddle.gameObject.y - 50
 		);
+		this.bullets.push(this.ball);
 
 		this.ball.setData("onPaddle", true);
 		this.ball.body.setVelocity(0, 0);
@@ -91,25 +94,57 @@ export default class GameScene extends Phaser.Scene {
 		// this.cameras.main.setZoom(this.initialZoom, this.initialZoom);
 		this.resetCamera();
 		this.timeBender = new TimeBender(this, this.createInvertedBall.bind(this));
+		this.nastyBullet = false;
 	}
 
 	bendTime() {
 		this.sounds.bwaaah.play();
-		this.timeBender.bendTime([this.ball, ...this.invertedBullets]);
+		this.timeBender.bendTime(this.bullets);
 	}
 
 	hitBrick(ball, brick) {
-		brick.body.enable = false;
-		brick.alpha = 0;
-		this.sounds.bleep.play();
+		const colliderMap = brick.getData("colliderMap");
+
+		if (ball.getData("type") !== "inverted-nasty" && brick.alpha !== 0) {
+			// disable this collision for all non-reversing balls
+			this.bullets.forEach((bullet) => {
+				const type = bullet.getData("type");
+				if (type !== "inverted-nasty") {
+					const collider = colliderMap[bullet.getData("id")];
+					if (collider) {
+						if (type === "main") {
+							this.physics.world.removeCollider(collider);
+						}
+					}
+				}
+			});
+			// brick.body.enable = false;
+			if (ball.getData("type") != "main") {
+				this.emitter.explode(20, brick.x, brick.y);
+				ball.fireball();
+			}
+			brick.alpha = 0;
+			this.sounds.bleep.play();
+		} else if (ball.getData("type") === "inverted-nasty") {
+			// nasty bullets replace ones you've hit.
+			if (brick.alpha !== 1) {
+				this.sounds.bleep.play();
+				brick.alpha = 1;
+
+				colliderMap[1] = this.physics.add.collider(
+					this.ball,
+					brick,
+					this.hitBrick,
+					null,
+					this
+				);
+			}
+		}
+
 		// this.cameras.main.shake(200, 0.005);
 		// this.physics.world.timeScale = 2;
 		if (this.bricks.every((brick) => brick.alpha == 0)) {
 			this.resetLevel();
-		}
-		if (ball.getData("type") != "main") {
-			this.emitter.explode(20, brick.x, brick.y);
-			ball.fireball();
 		}
 	}
 
@@ -132,13 +167,33 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	createBall(x, y, type = "main") {
-		const color = type === "main" ? 0xffffff : GREEN; //;
-		const ball = new Bullet(this, x, y, BALL_INIT.radius, color, 1, type);
-		if (type == "main") {
-			this.physics.add.collider(ball, this.bricks, this.hitBrick, null, this);
-		} else {
-			this.physics.add.overlap(ball, this.bricks, this.hitBrick, null, this);
-		}
+		const ball = new Bullet(this, x, y, BALL_INIT.radius, 1, type);
+		this.ballCounter += 1;
+		ball.setData("id", this.ballCounter);
+
+		this.bricks.forEach((brick) => {
+			const colliderMap = brick.getData("colliderMap");
+			if ((type === "main" && brick.alpha == 1) || type === "inverted-nasty") {
+				colliderMap[this.ballCounter] = this.physics.add.collider(
+					ball,
+					brick,
+					this.hitBrick,
+					null,
+					this
+				);
+			} else if (type == "inverted") {
+				colliderMap[this.ballCounter] = this.physics.add.overlap(
+					ball,
+					this.bricks,
+					this.hitBrick,
+					null,
+					this
+				);
+			}
+
+			brick.setData("colliderMap", colliderMap);
+		});
+
 		this.physics.add.collider(
 			ball,
 			this.paddle.gameObject,
@@ -154,19 +209,17 @@ export default class GameScene extends Phaser.Scene {
 		this.bricks = [];
 		for (let i = 0; i < GRID_ROWS; i++) {
 			for (let j = 0; j < GRID_COLS; j++) {
-				this.bricks.push(
-					this.add.rectangle(
-						GRID_MARGINS.x +
-							BRICK_WIDTH / 2 +
-							(BRICK_WIDTH + BRICK_PADDING) * j,
-						GRID_MARGINS.top +
-							BRICK_HEIGHT / 2 +
-							(BRICK_HEIGHT + BRICK_PADDING) * i,
-						BRICK_WIDTH,
-						BRICK_HEIGHT,
-						GREEN_DARKER
-					)
+				const brick = this.add.rectangle(
+					GRID_MARGINS.x + BRICK_WIDTH / 2 + (BRICK_WIDTH + BRICK_PADDING) * j,
+					GRID_MARGINS.top +
+						BRICK_HEIGHT / 2 +
+						(BRICK_HEIGHT + BRICK_PADDING) * i,
+					BRICK_WIDTH,
+					BRICK_HEIGHT,
+					GREEN_DARKER
 				);
+				brick.setData("colliderMap", {});
+				this.bricks.push(brick);
 			}
 		}
 
@@ -203,10 +256,12 @@ export default class GameScene extends Phaser.Scene {
 
 	resetBalls() {
 		this.time.removeEvent(this.timer);
-		this.invertedBullets.forEach((bullet) => {
-			bullet.destroy();
+		this.bullets.forEach((bullet) => {
+			if (bullet.getData("type") !== "main") {
+				bullet.destroy();
+			}
 		});
-		this.invertedBullets = [];
+		this.bullets = [this.ball];
 		this.ball.setPosition(
 			this.paddle.gameObject.x,
 			this.paddle.gameObject.y - 50
@@ -227,8 +282,14 @@ export default class GameScene extends Phaser.Scene {
 
 	createInvertedBall() {
 		this.resetCamera();
-		const newBall = this.createBall(this.ball.x, this.ball.y, "inverted");
-		this.invertedBullets.push(newBall);
+		let newBall;
+		if (this.nastyBullet) {
+			newBall = this.createBall(this.ball.x, this.ball.y, "inverted-nasty");
+		} else {
+			newBall = this.createBall(this.ball.x, this.ball.y, "inverted");
+		}
+		this.nastyBullet = !this.nastyBullet;
+		this.bullets.push(newBall);
 
 		newBall.body.setVelocityX(-this.ball.body.velocity.x * 0.75);
 		newBall.body.setVelocityY(-this.ball.body.velocity.y * 0.75);

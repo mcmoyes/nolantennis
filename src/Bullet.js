@@ -1,8 +1,21 @@
+import { GREEN } from "./consts";
+
 const TRAIL_MS = 40;
 export default class Bullet extends Phaser.GameObjects.Arc {
-	constructor(scene, x, y, radius, fillColor, fillAlpha, type) {
+	constructor(scene, x, y, radius, fillAlpha, type) {
+		let fillColor;
+		if (type == "main") {
+			fillColor = 0xffffff;
+		} else if (type == "inverted") {
+			fillColor = GREEN;
+		} else if (type == "inverted-nasty") {
+			fillColor = 0x000000;
+		}
 		super(scene, x, y, radius, 0, 360, false, fillColor, fillAlpha);
 		scene.add.existing(this);
+		if (type == "inverted-nasty") {
+			this.setStrokeStyle(2, 0xffffff, 1);
+		}
 		this.setDepth(1);
 		scene.physics.add.existing(this);
 		this.body.setCollideWorldBounds(true);
