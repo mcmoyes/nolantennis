@@ -1,11 +1,11 @@
-import { PET_GREEN } from "./consts";
+import { GREEN } from "./consts";
 
 const PADDLE_WIDTH = 60;
 const PADDLE_EASING = 0.8;
 
 export default class Paddle {
 	constructor(scene) {
-		this.view = scene.add.rectangle(400, 360, PADDLE_WIDTH, 20, PET_GREEN);
+		this.view = scene.add.rectangle(400, 360, PADDLE_WIDTH, 20, GREEN);
 		this.gameObject = scene.physics.add.existing(this.view);
 		this.gameObject.body.setImmovable();
 

@@ -16,7 +16,7 @@ export default class TimeBender {
 		this.bullets = bullets;
 		this.startTime = this.scene.time.now;
 		this.scene.physics.world.timeScale = 2;
-		this.scene.cameras.main.zoomTo(1.5, SLOWDOWN_DURATION);
+		this.scene.cameras.main.zoomTo(1.3, SLOWDOWN_DURATION);
 		this.scene.cameras.main.startFollow(bullets[0], true, 0.09, 0.09);
 		bullets[0].startTrail(SLOWDOWN_DURATION);
 	}

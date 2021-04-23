@@ -50,7 +50,7 @@ export default class Bullet extends Phaser.GameObjects.Arc {
 			this.y,
 			this.radius,
 			this.fillColor,
-			1
+			0.6
 		);
 		const ringInner = this.scene.add.circle(
 			this.x,
