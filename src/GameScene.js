@@ -39,7 +39,7 @@ export default class GameScene extends Phaser.Scene {
 		this.lives = data.lives || 3;
 		this.level = data.level || 1;
 		this.score = data.score || 0;
-		this.chanceOfNasty = 0.3 + 0.05 * data.level;
+		this.chanceOfNasty = 0.3 + 0.05 * this.level;
 	}
 
 	preload() {
@@ -87,14 +87,13 @@ export default class GameScene extends Phaser.Scene {
 		this.lerpTime = 0;
 
 		this.timerConfig = {
-			delay: 4340, // ms
+			delay: 4240 + Math.round(Math.random() * 3) * 1500, // ms
 			callback: this.bendTime,
 			//args: [],
 			callbackScope: this,
 			loop: false,
 		};
 		this.timeBender = new TimeBender(this, this.createInvertedBall.bind(this));
-		this.nastyBullet = false;
 		// set up something for nasty bullets to bounce up against at the bottom.
 		this.nastyBouncer = this.add.rectangle(
 			WIDTH / 2,
@@ -413,12 +412,12 @@ export default class GameScene extends Phaser.Scene {
 		this.audioController.playBwaah();
 		this.resetCamera();
 		let newBall;
-		if (this.nastyBullet) {
+		if (Math.random() <= this.chanceOfNasty) {
+			// create nasty ball
 			newBall = this.createBall(this.ball.x, this.ball.y, "inverted-nasty");
 		} else {
 			newBall = this.createBall(this.ball.x, this.ball.y, "inverted");
 		}
-		this.nastyBullet = !this.nastyBullet;
 		this.bullets.push(newBall);
 
 		newBall.body.setVelocityX(-this.ball.body.velocity.x * 0.75);

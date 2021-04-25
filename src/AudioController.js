@@ -62,7 +62,7 @@ export default class AudioController {
 		if (this.musicIndex === AUDIO.music.length) {
 			this.musicIndex = 0;
 		}
-		this.sounds[`music${this.musicIndex}`].play();
+		this.sounds[`music${this.musicIndex}`].play({ volume: 0.7 });
 	}
 
 	stopMusic() {
@@ -72,19 +72,19 @@ export default class AudioController {
 	}
 
 	playBrickHit() {
-		this.playRandom("brickHit", { volume: 0.3 });
+		this.playRandom("brickHit", { volume: 0.8 });
 	}
 
 	playPaddleHit() {
-		this.playRandom("paddle", { volume: 0.4 });
+		this.playRandom("paddle", { volume: 0.8 });
 	}
 
 	playBleep() {
-		this.playRandom("bleep", { volume: 0.6 });
+		this.playRandom("bleep", { volume: 0.8 });
 	}
 
 	playBloop() {
-		this.playRandom("bloop", { volume: 0.6 });
+		this.playRandom("bloop", { volume: 0.8 });
 	}
 
 	playBwaaah() {
