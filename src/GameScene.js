@@ -3,6 +3,7 @@ import Paddle from "./Paddle";
 import { GREEN_DARKER, GREEN, AMBER } from "./consts";
 import TimeBender from "./TimeBender";
 import Bullet from "./Bullet";
+import AudioController from "./AudioController";
 
 // grid stuff
 const WIDTH = 800;
@@ -32,23 +33,19 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	init(data) {
-		this.initialZoom = data.zoom;
+		// this.initialZoom = data.zoom;
+		this.audioController = new AudioController(this);
 	}
 	preload() {
-		this.load.audio("bloop", "assets/bloop.mp3");
-		this.load.audio("bleep", "assets/bloopier.mp3");
-		this.load.audio("bwaaah", "assets/shortbwaaah.mp3");
 		this.load.image("pixel", "assets/pixel.png");
 		this.load.image("circle", "assets/circle.png");
 		this.load.atlas("flares", "assets/flares.png", "assets/flares.json");
+		this.audioController.preloadAssets();
 	}
 
 	create() {
-		this.sounds = {
-			bleep: this.sound.add("bleep"),
-			bloop: this.sound.add("bloop"),
-			bwaaah: this.sound.add("bwaaah"),
-		};
+		this.audioController.createAssets();
+
 		this.bullets = [];
 		this.paddle = new Paddle(this);
 
@@ -81,19 +78,13 @@ export default class GameScene extends Phaser.Scene {
 		this.ball.body.setVelocity(0, 0);
 		this.lerpTime = 0;
 
-		this.input.on("pointermove", this.onPointerMove.bind(this));
-		this.input.on("pointerup", this.onPointerUp.bind(this));
-
 		this.timerConfig = {
-			delay: 4000, // ms
+			delay: 4340, // ms
 			callback: this.bendTime,
 			//args: [],
 			callbackScope: this,
 			loop: false,
 		};
-		this.cameras.main.setBounds(0, 0, WIDTH, HEIGHT);
-		// this.cameras.main.setZoom(this.initialZoom, this.initialZoom);
-		this.resetCamera();
 		this.timeBender = new TimeBender(this, this.createInvertedBall.bind(this));
 		this.nastyBullet = false;
 		// set up something for nasty bullets to bounce up against at the bottom.
@@ -107,10 +98,23 @@ export default class GameScene extends Phaser.Scene {
 		);
 		this.physics.add.existing(this.nastyBouncer);
 		this.nastyBouncer.body.setImmovable();
+		this.cameras.main.setZoom(0.01);
+
+		this.cameras.main.zoomTo(1, 500, "Quad");
+		this.cameras.main.on("camerazoomcomplete", () => {
+			this.begin();
+		});
+		this.hasBwaaahed = false;
+	}
+
+	begin() {
+		this.input.on("pointermove", this.onPointerMove.bind(this));
+		this.input.on("pointerup", this.onPointerUp.bind(this));
+		this.cameras.main.setBounds(0, 0, WIDTH, HEIGHT);
 	}
 
 	bendTime() {
-		this.sounds.bwaaah.play();
+		this.audioController.playBwaaah();
 		this.timeBender.bendTime(this.bullets);
 	}
 
@@ -147,11 +151,11 @@ export default class GameScene extends Phaser.Scene {
 				ball.fireball();
 			}
 			brick.alpha = 0;
-			this.sounds.bleep.play();
+			this.playBrickHit();
 		} else if (ball.getData("type") === "inverted-nasty") {
 			// nasty bullets replace ones you've hit.
 			if (brick.alpha !== 1) {
-				this.sounds.bleep.play();
+				this.playBrickHit();
 				brick.alpha = 1;
 
 				colliderMap[1] = this.physics.add.collider(
@@ -172,7 +176,13 @@ export default class GameScene extends Phaser.Scene {
 			this.resetLevel();
 		}
 	}
-
+	playBrickHit() {
+		if (this.hasBwaaahed) {
+			this.audioController.playBrickHit();
+		} else {
+			this.audioController.playBleep();
+		}
+	}
 	onPointerMove(pointer) {
 		if (this.ball.getData("onPaddle")) {
 			this.ball.x = this.paddle.gameObject.x;
@@ -260,7 +270,11 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	hitPaddle(ball, paddle) {
-		this.sounds.bloop.play();
+		if (this.hasBwaaahed) {
+			this.audioController.playPaddleHit();
+		} else {
+			this.audioController.playBloop();
+		}
 		var diff = 0;
 
 		if (ball.x < paddle.x) {
@@ -276,17 +290,29 @@ export default class GameScene extends Phaser.Scene {
 			//  Add a little random X to stop it bouncing straight up!
 			ball.body.setVelocityX(2 + Math.random() * 8);
 		}
+		if (ball.getData("type") === "inverted-nasty") {
+			ball.destroy();
+		}
 	}
 
 	update(gameTime, delta) {
 		this.paddle.update();
 		this.timeBender.update(gameTime, delta);
 		if (this.ball.y > 400) {
-			this.resetBalls();
+			this.die();
 		}
 	}
 
+	die() {
+		this.audioController.stopMusic();
+		this.resetBalls();
+		this.timeBender.reset();
+		this.resetCamera();
+		this.audioController.stopBwaaah();
+	}
+
 	resetBalls() {
+		this.hasBwaaahed = false;
 		this.time.removeEvent(this.timer);
 		this.bullets.forEach((bullet) => {
 			if (bullet.getData("type") !== "main") {
@@ -300,19 +326,30 @@ export default class GameScene extends Phaser.Scene {
 		);
 		this.ball.body.setVelocity(0, 0);
 		this.ball.setData("onPaddle", true);
-		this.timeBender.reset();
-		this.resetCamera();
 	}
 	resetLevel() {
-		this.resetBalls();
+		// this.resetBalls();
 
-		this.bricks.forEach(function (brick) {
-			brick.enableBody(false, 0, 0, true, true);
-			brick.alpha = 1;
+		// this.bricks.forEach(function (brick) {
+		// 	brick.alpha = 1;
+		// });
+		this.audioController.stopMusic();
+		this.ball.alpha = 0;
+		this.time.addEvent({
+			delay: 500,
+			callback: () => {
+				this.scene.restart();
+			},
 		});
 	}
 
 	createInvertedBall() {
+		if (!this.hasBwaaahed) {
+			this.audioController.playMusic();
+			this.hasBwaaahed = true;
+		}
+		this.audioController.stopBwaaah();
+		this.audioController.playBwaah();
 		this.resetCamera();
 		let newBall;
 		if (this.nastyBullet) {
@@ -335,9 +372,8 @@ export default class GameScene extends Phaser.Scene {
 	resetCamera() {
 		{
 			this.cameras.main.stopFollow();
-			this.cameras.main.zoomTo(1, 300);
-			// this.cameras.main.setZoom(1);
-			// this.cameras.main.centerOn(0, 0);
+			this.cameras.main.zoomTo(1, 300, "Quad", true);
+			this.cameras.main.centerOn(0, 0);
 		}
 	}
 }

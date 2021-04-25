@@ -59,13 +59,13 @@ export default class IntroScene extends Phaser.Scene {
 			callbackScope: this,
 		});
 
-		this.input.on("pointerdown", this.startGame.bind(this));
+		this.input.on("pointerup", this.startGame.bind(this));
 	}
 
 	transitionToStart() {
-		this.cameras.main.zoomTo(0.01, 500);
+		this.cameras.main.fadeOut(500);
 		this.time.addEvent({
-			delay: 500,
+			delay: 1000,
 			callback: this.startGame,
 			callbackScope: this,
 		});
