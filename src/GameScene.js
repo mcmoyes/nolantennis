@@ -4,6 +4,7 @@ import { GREEN_DARKER, GREEN, AMBER } from "./consts";
 import TimeBender from "./TimeBender";
 import Bullet from "./Bullet";
 import AudioController from "./AudioController";
+import WebFontFile from "./WebFontFile";
 
 // grid stuff
 const WIDTH = 800;
@@ -35,8 +36,15 @@ export default class GameScene extends Phaser.Scene {
 	init(data) {
 		// this.initialZoom = data.zoom;
 		this.audioController = new AudioController(this);
+		this.lives = data.lives || 3;
+		this.level = data.level || 1;
+		this.score = data.score || 0;
+		this.chanceOfNasty = 0.3 + 0.05 * data.level;
 	}
+
 	preload() {
+		this.load.addFile(new WebFontFile(this.load, "Press Start 2P"));
+
 		this.load.image("pixel", "assets/pixel.png");
 		this.load.image("circle", "assets/circle.png");
 		this.load.atlas("flares", "assets/flares.png", "assets/flares.json");
@@ -105,6 +113,12 @@ export default class GameScene extends Phaser.Scene {
 			this.begin();
 		});
 		this.hasBwaaahed = false;
+		this.livesText = null;
+		this.levelText = null;
+		this.scoreText = null;
+		this.showLives();
+		this.showLevel();
+		this.showScore();
 	}
 
 	begin() {
@@ -133,6 +147,8 @@ export default class GameScene extends Phaser.Scene {
 							this.physics.world.removeCollider(collider);
 						}
 					}
+					this.score += 10;
+					this.showScore();
 				} else {
 					// add collider for inverted-nasty
 					colliderMap[bulletId] = this.physics.add.collider(
@@ -173,7 +189,7 @@ export default class GameScene extends Phaser.Scene {
 		// this.cameras.main.shake(200, 0.005);
 		// this.physics.world.timeScale = 2;
 		if (this.bricks.every((brick) => brick.alpha == 0)) {
-			this.resetLevel();
+			this.resetLevel(this.level + 1, this.lives, this.score);
 		}
 	}
 	playBrickHit() {
@@ -186,6 +202,45 @@ export default class GameScene extends Phaser.Scene {
 	onPointerMove(pointer) {
 		if (this.ball.getData("onPaddle")) {
 			this.ball.x = this.paddle.gameObject.x;
+		}
+	}
+
+	showLives() {
+		const txt = `LIVES: ${this.lives}`;
+		if (!this.livesText) {
+			this.livesText = this.add.text(GRID_MARGINS.x, 5, txt, {
+				fontFamily: '"Press Start 2P"',
+				fontSize: "8px",
+				color: "#2db300",
+			});
+		} else {
+			this.livesText.text = txt;
+		}
+	}
+
+	showLevel() {
+		const txt = `LEVEL: ${this.level}`;
+		if (!this.levelText) {
+			this.levelText = this.add.text(800 - GRID_MARGINS.x - 80, 5, txt, {
+				fontFamily: '"Press Start 2P"',
+				fontSize: "8px",
+				color: "#2db300",
+			});
+		} else {
+			this.levelText.text = txt;
+		}
+	}
+
+	showScore() {
+		const txt = `SCORE: ${this.score}`;
+		if (!this.scoreText) {
+			this.scoreText = this.add.text(400 - 34, 5, txt, {
+				fontFamily: '"Press Start 2P"',
+				fontSize: "8px",
+				color: "#2db300",
+			});
+		} else {
+			this.scoreText.text = txt;
 		}
 	}
 
@@ -290,9 +345,9 @@ export default class GameScene extends Phaser.Scene {
 			//  Add a little random X to stop it bouncing straight up!
 			ball.body.setVelocityX(2 + Math.random() * 8);
 		}
-		if (ball.getData("type") === "inverted-nasty") {
-			ball.destroy();
-		}
+		// if (ball.getData("type") === "inverted-nasty") {
+		// 	ball.destroy();
+		// }
 	}
 
 	update(gameTime, delta) {
@@ -309,6 +364,12 @@ export default class GameScene extends Phaser.Scene {
 		this.timeBender.reset();
 		this.resetCamera();
 		this.audioController.stopBwaaah();
+		this.lives -= 1;
+		this.showLives();
+
+		if (this.lives == 0) {
+			this.scene.start("GameOverScene", { score: this.score });
+		}
 	}
 
 	resetBalls() {
@@ -327,7 +388,7 @@ export default class GameScene extends Phaser.Scene {
 		this.ball.body.setVelocity(0, 0);
 		this.ball.setData("onPaddle", true);
 	}
-	resetLevel() {
+	resetLevel(level, lives, score) {
 		// this.resetBalls();
 
 		// this.bricks.forEach(function (brick) {
@@ -338,7 +399,7 @@ export default class GameScene extends Phaser.Scene {
 		this.time.addEvent({
 			delay: 500,
 			callback: () => {
-				this.scene.restart();
+				this.scene.restart({ level, lives, score });
 			},
 		});
 	}

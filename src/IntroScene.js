@@ -73,6 +73,6 @@ export default class IntroScene extends Phaser.Scene {
 
 	startGame() {
 		// this.music.stop();
-		this.scene.start("GameScene", { zoom: this.cameras.main.zoom });
+		this.scene.start("GameScene");
 	}
 }

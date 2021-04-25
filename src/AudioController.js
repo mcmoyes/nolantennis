@@ -91,14 +91,18 @@ export default class AudioController {
 		this.bwaaah = this.playRandom("bwaaah");
 	}
 	stopBwaaah() {
-		this.bwaaah.stop();
+		if (this.bwaaah) {
+			this.bwaaah.stop();
+		}
 	}
 
 	playBwaah() {
 		this.bwaah = this.playRandom("bwaah");
 	}
 	stopBwaah() {
-		this.bwaah.stop();
+		if (this.bwaah) {
+			this.bwaah.stop();
+		}
 	}
 
 	playRandom(key, opts) {
