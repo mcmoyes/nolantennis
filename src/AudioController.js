@@ -20,7 +20,7 @@ const AUDIO = {
 	paddle: ["assets/nolan_cursor_bounce.mp3"],
 	bloop: ["assets/bloop.mp3"],
 	bleep: ["assets/bloopier.mp3"],
-	bwaaah: ["assets/bwaaah.mp3"],
+	bendTime: ["assets/bwaaah.mp3"],
 	bwaah: ["assets/bwaah.mp3"],
 };
 
@@ -87,12 +87,12 @@ export default class AudioController {
 		this.playRandom("bloop", { volume: 0.8 });
 	}
 
-	playBwaaah() {
-		this.bwaaah = this.playRandom("bwaaah");
+	playBendTime() {
+		this.bendTime = this.playRandom("bendTime");
 	}
-	stopBwaaah() {
-		if (this.bwaaah) {
-			this.bwaaah.stop();
+	stopBendTime() {
+		if (this.bendTime) {
+			this.bendTime.stop();
 		}
 	}
 
