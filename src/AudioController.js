@@ -24,11 +24,24 @@ const AUDIO = {
 	bwaah: ["assets/bwaah.mp3"],
 };
 
+const SEQUENCES = {
+	brickHit: [
+		//0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,
+		//6,6,6,6,5,5,5,5,4,4,4,4,3,3,3,3,2,2,2,2,1,1,1,1
+		0,1,2,3,4,5,6,5,4,3,2,1
+	],
+	music: [
+		0,0,1,2,0,0,1,2,
+		3,3,4,3,4,3,2,2
+	],
+};
+
 export default class AudioController {
 	constructor(scene) {
 		this.scene = scene;
 		this.sounds = {};
 		this.musicIndex = -1;
+		this.brickHitIndex = -1;
 	}
 
 	getId(key, index) {
@@ -56,23 +69,51 @@ export default class AudioController {
 		}
 	}
 
-	playMusic() {
-		this.musicIndex++;
+	resetSequences() {
+		this.musicIndex = -1;
+		this.brickHitIndex = -1;
+	}
 
-		if (this.musicIndex === AUDIO.music.length) {
+	playMusic() {
+		/*
+		this.musicIndex++;
+		if (this.musicIndex > SEQUENCES.music.length - 1) {
 			this.musicIndex = 0;
 		}
-		this.sounds[`music${this.musicIndex}`].play({ volume: 0.7 });
+		let musicAudioIndex = SEQUENCES.music[this.musicIndex];
+		if (musicAudioIndex > AUDIO.music.length - 1) {
+			musicAudioIndex = 0;
+		}
+		this.sounds[`music${musicAudioIndex}`].play({ volume: 0.8 });
+		*/
 	}
 
 	stopMusic() {
-		if (this.sounds[`music${this.musicIndex}`]) {
-			this.sounds[`music${this.musicIndex}`].stop();
+		// called at the end of a round
+		let musicAudioIndex = SEQUENCES.music[this.musicIndex];
+		if (musicAudioIndex > AUDIO.music.length - 1) {
+			musicAudioIndex = 0;
 		}
+		if (this.sounds[`music${musicAudioIndex}`]) {
+			this.sounds[`music${musicAudioIndex}`].stop();
+		}
+		
+		// reset sequences for next round
+		this.resetSequences();
 	}
 
 	playBrickHit() {
-		this.playRandom("brickHit", { volume: 0.8 });
+		this.brickHitIndex++;
+		if (this.brickHitIndex > SEQUENCES.brickHit.length - 1) {
+			this.brickHitIndex = 0;
+		}
+		let brickHitAudioIndex = SEQUENCES.brickHit[this.brickHitIndex];
+		if (brickHitAudioIndex > AUDIO.brickHit.length - 1) {
+			brickHitAudioIndex = 0;
+		}
+		this.sounds[`brickHit${brickHitAudioIndex}`].play({ volume: 0.6 });
+
+		//this.playRandom("brickHit", { volume: 0.8 });
 	}
 
 	playPaddleHit() {
@@ -88,16 +129,37 @@ export default class AudioController {
 	}
 
 	playBwaaah() {
-		this.bwaaah = this.playRandom("bwaaah");
+		//this.bwaaah = this.playRandom("bwaaah");
 	}
 	stopBwaaah() {
-		if (this.bwaaah) {
-			this.bwaaah.stop();
-		}
+		//if (this.bwaaah) {
+		//	this.bwaaah.stop();
+		//}
 	}
 
 	playBwaah() {
-		this.bwaah = this.playRandom("bwaah");
+		this.bwaah = this.playRandom("bwaah", { volume: 0.7 });
+
+		// stop current music track
+		let musicAudioIndex = SEQUENCES.music[this.musicIndex];
+		if (musicAudioIndex > AUDIO.music.length - 1) {
+			musicAudioIndex = 0;
+		}
+		if (this.sounds[`music${musicAudioIndex}`]) {
+			this.sounds[`music${musicAudioIndex}`].stop();
+		}
+
+		// play next music track
+		this.musicIndex++;
+		if (this.musicIndex > SEQUENCES.music.length - 1) {
+			this.musicIndex = 0;
+		}
+		let nextMusicAudioIndex = SEQUENCES.music[this.musicIndex];
+		if (nextMusicAudioIndex > AUDIO.music.length - 1) {
+			nextMusicAudioIndex = 0;
+		}
+		this.sounds[`music${nextMusicAudioIndex}`].play({ volume: 1 });
+
 	}
 	stopBwaah() {
 		if (this.bwaah) {
