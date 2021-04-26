@@ -166,11 +166,11 @@ export default class GameScene extends Phaser.Scene {
 				ball.fireball();
 			}
 			brick.alpha = 0;
-			this.playBrickHit();
+			this.playBrickHit(ball);
 		} else if (ball.getData("type") === "inverted-nasty") {
 			// nasty bullets replace ones you've hit.
 			if (brick.alpha !== 1) {
-				this.playBrickHit();
+				this.playBrickHit(ball);
 				brick.alpha = 1;
 
 				colliderMap[1] = this.physics.add.collider(
@@ -191,9 +191,13 @@ export default class GameScene extends Phaser.Scene {
 			this.resetLevel(this.level + 1, this.lives, this.score);
 		}
 	}
-	playBrickHit() {
+	playBrickHit(ball) {
 		if (this.hasBwaaahed) {
-			this.audioController.playBrickHit();
+			const opts = {
+				pan: (ball.x / (WIDTH * 0.5)) - 1,
+				type: ball.getData("type")
+			};
+			this.audioController.playBrickHit(opts);
 		} else {
 			this.audioController.playBleep();
 		}
@@ -325,7 +329,12 @@ export default class GameScene extends Phaser.Scene {
 
 	hitPaddle(ball, paddle) {
 		if (this.hasBwaaahed) {
-			this.audioController.playPaddleHit();
+			// calculate pan based on ball.x
+			// postition 0 to WIDTH  ->  pan -1 to 1
+			this.audioController.playPaddleHit({
+				pan: (ball.x / (WIDTH * 0.5)) - 1,
+				type: ball.getData("type")
+			});
 		} else {
 			this.audioController.playBloop();
 		}

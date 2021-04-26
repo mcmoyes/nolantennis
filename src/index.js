@@ -16,7 +16,7 @@ const config = {
 		default: "arcade",
 	},
 	audio: {
-		disableWebAudio: true,
+		disableWebAudio: false,
 	},
 };
 

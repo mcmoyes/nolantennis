@@ -1,4 +1,4 @@
-const SLOWDOWN_DURATION = 1760;
+const SLOWDOWN_DURATION = 1500;//1760;
 let t;
 
 export default class TimeBender {
