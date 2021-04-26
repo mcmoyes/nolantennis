@@ -122,7 +122,7 @@ export default class GameScene extends Phaser.Scene {
 
 	begin() {
 		this.input.on("pointermove", this.onPointerMove.bind(this));
-		this.input.on("pointerup", this.onPointerUp.bind(this));
+		this.input.on("pointerdown", this.onPointerDown.bind(this));
 		this.cameras.main.setBounds(0, 0, WIDTH, HEIGHT);
 	}
 
@@ -194,8 +194,8 @@ export default class GameScene extends Phaser.Scene {
 	playBrickHit(ball) {
 		if (this.hasBwaaahed) {
 			const opts = {
-				pan: (ball.x / (WIDTH * 0.5)) - 1,
-				type: ball.getData("type")
+				pan: ball.x / (WIDTH * 0.5) - 1,
+				type: ball.getData("type"),
 			};
 			this.audioController.playBrickHit(opts);
 		} else {
@@ -247,7 +247,7 @@ export default class GameScene extends Phaser.Scene {
 		}
 	}
 
-	onPointerUp(pointer) {
+	onPointerDown(pointer) {
 		if (this.ball.getData("onPaddle")) {
 			this.ball.setData("onPaddle", false);
 			this.ball.body.setVelocity(
@@ -332,8 +332,8 @@ export default class GameScene extends Phaser.Scene {
 			// calculate pan based on ball.x
 			// postition 0 to WIDTH  ->  pan -1 to 1
 			this.audioController.playPaddleHit({
-				pan: (ball.x / (WIDTH * 0.5)) - 1,
-				type: ball.getData("type")
+				pan: ball.x / (WIDTH * 0.5) - 1,
+				type: ball.getData("type"),
 			});
 		} else {
 			this.audioController.playBloop();

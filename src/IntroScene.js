@@ -12,7 +12,28 @@ export default class IntroScene extends Phaser.Scene {
 
 	create() {
 		this.music = this.sound.add("intro");
-		this.music.play();
+
+		this.startText = this.add.text(400, 300, `PRESS TO START`, {
+			fontFamily: '"Squada One"',
+			fontSize: "24px",
+		});
+		this.startText.setOrigin(0.5, 0.5);
+		this.input.on("pointerup", this.onPointerUp.bind(this));
+	}
+
+	onPointerUp() {
+		if (this.startText.alpha === 1) {
+			this.music.play();
+
+			this.startText.alpha = 0;
+			this.startIntro();
+			//
+		} else {
+			this.transitionToStart();
+		}
+	}
+
+	startIntro() {
 		const nolan = this.add.text(400, 120, `CHRISTOPHER NOLAN's`, {
 			fontFamily: '"Squada One"',
 			fontSize: "24px",
@@ -58,8 +79,6 @@ export default class IntroScene extends Phaser.Scene {
 			callback: this.transitionToStart,
 			callbackScope: this,
 		});
-
-		this.input.on("pointerup", this.startGame.bind(this));
 	}
 
 	transitionToStart() {
