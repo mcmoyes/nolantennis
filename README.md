@@ -1,6 +1,8 @@
 # Christopher Nolan's Tennis
 
-Built in a few days for a game jam. Don't judge me.
+Built in a few days for a game jam.
+
+Music and SFX by [Owen Grace](https://soundcloud.com/goodtimesguy)
 
 ## Requirements
 

@@ -7,12 +7,12 @@ export default class IntroScene extends Phaser.Scene {
 
 	preload() {
 		this.load.addFile(new WebFontFile(this.load, "Squada One"));
-		// this.load.audio("intro", "assets/intro.mp3");
+		this.load.audio("intro", "assets/nolan_music_splash.mp3");
 	}
 
 	create() {
-		// this.music = this.sound.add("intro");
-		// this.music.play();
+		this.music = this.sound.add("intro");
+		this.music.play();
 		const nolan = this.add.text(400, 120, `CHRISTOPHER NOLAN's`, {
 			fontFamily: '"Squada One"',
 			fontSize: "24px",

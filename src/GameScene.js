@@ -127,7 +127,7 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	bendTime() {
-		this.audioController.playBwaaah();
+		this.audioController.playBendTime();
 		this.timeBender.bendTime(this.bullets);
 	}
 
@@ -362,7 +362,7 @@ export default class GameScene extends Phaser.Scene {
 		this.resetBalls();
 		this.timeBender.reset();
 		this.resetCamera();
-		this.audioController.stopBwaaah();
+		this.audioController.stopBendTime();
 		this.lives -= 1;
 		this.showLives();
 
@@ -408,7 +408,7 @@ export default class GameScene extends Phaser.Scene {
 			this.audioController.playMusic();
 			this.hasBwaaahed = true;
 		}
-		this.audioController.stopBwaaah();
+		this.audioController.stopBendTime();
 		this.audioController.playBwaah();
 		this.resetCamera();
 		let newBall;
