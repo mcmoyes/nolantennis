@@ -87,7 +87,7 @@ export default class GameScene extends Phaser.Scene {
 		this.lerpTime = 0;
 
 		this.timerConfig = {
-			delay: 4240 + Math.round(Math.random() * 3) * 1500, // ms
+			delay: (Math.round(Math.random() * 3) * 1500) + 6000, // or + 4500 (ms)
 			callback: this.bendTime,
 			//args: [],
 			callbackScope: this,
