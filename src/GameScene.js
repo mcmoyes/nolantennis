@@ -2,9 +2,12 @@ import Phaser from "phaser";
 import Paddle from "./Paddle";
 import { GREEN_DARKER, GREEN, AMBER } from "./consts";
 import TimeBender from "./TimeBender";
-import Bullet from "./Bullet";
+import Bullet from "./bullets/Bullet";
 import AudioController from "./AudioController";
 import WebFontFile from "./WebFontFile";
+import PlayerBullet from "./bullets/PlayerBullet";
+import InvertedBullet from "./bullets/InvertedBullet";
+import InvertedNastyBullet from "./bullets/InvertedNastyBullet";
 
 // grid stuff
 const WIDTH = 800;
@@ -59,7 +62,7 @@ export default class GameScene extends Phaser.Scene {
 
 		var particles = this.add.particles("pixel");
 
-		this.emitter = particles.createEmitter({
+		this.brickEmitter = particles.createEmitter({
 			lifespan: 400,
 			speed: { min: -200, max: 200 },
 			angle: { min: 0, max: 180 },
@@ -87,7 +90,7 @@ export default class GameScene extends Phaser.Scene {
 		this.lerpTime = 0;
 
 		this.timerConfig = {
-			delay: (Math.round(Math.random() * 4) * 1500) + 4500, // 4.5, 6, 7.5, or 9s
+			delay: Math.round(Math.random() * 4) * 1500 + 4500, // 4.5, 6, 7.5, or 9s
 			callback: this.bendTime,
 			//args: [],
 			callbackScope: this,
@@ -161,10 +164,7 @@ export default class GameScene extends Phaser.Scene {
 				}
 			});
 			// brick.body.enable = false;
-			if (ball.getData("type") != "main") {
-				this.emitter.explode(20, brick.x, brick.y);
-				ball.fireball();
-			}
+			ball.onHitBrick(brick);
 			brick.alpha = 0;
 			this.playBrickHit(ball);
 		} else if (ball.getData("type") === "inverted-nasty") {
@@ -260,7 +260,14 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	createBall(x, y, type = "main") {
-		const ball = new Bullet(this, x, y, BALL_INIT.radius, 1, type);
+		let ball;
+		if (type == "main") {
+			ball = new PlayerBullet(this, x, y);
+		} else if (type == "inverted") {
+			ball = new InvertedBullet(this, x, y);
+		} else if (type == "inverted-nasty") {
+			ball = new InvertedNastyBullet(this, x, y);
+		}
 		this.ballCounter += 1;
 		ball.setData("id", this.ballCounter);
 
@@ -353,6 +360,7 @@ export default class GameScene extends Phaser.Scene {
 			//  Add a little random X to stop it bouncing straight up!
 			ball.body.setVelocityX(2 + Math.random() * 8);
 		}
+		ball.onHitPaddle(paddle);
 		// if (ball.getData("type") === "inverted-nasty") {
 		// 	ball.destroy();
 		// }
