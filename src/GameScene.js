@@ -30,7 +30,7 @@ const BALL_INIT = {
 	velocityY: -300,
 };
 
-const CHANCE_OF_NASTY = 1;
+const CHANCE_OF_NASTY = 0.3;
 
 export default class GameScene extends Phaser.Scene {
 	constructor() {
