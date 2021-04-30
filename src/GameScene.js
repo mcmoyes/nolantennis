@@ -1,8 +1,7 @@
 import Phaser from "phaser";
 import Paddle from "./Paddle";
-import { GREEN_DARKER, GREEN, AMBER } from "./consts";
+import { GREEN_DARKER } from "./consts";
 import TimeBender from "./TimeBender";
-import Bullet from "./bullets/Bullet";
 import AudioController from "./AudioController";
 import WebFontFile from "./WebFontFile";
 import PlayerBullet from "./bullets/PlayerBullet";
@@ -31,6 +30,8 @@ const BALL_INIT = {
 	velocityY: -300,
 };
 
+const CHANCE_OF_NASTY = 1;
+
 export default class GameScene extends Phaser.Scene {
 	constructor() {
 		super({ key: "GameScene" });
@@ -42,7 +43,7 @@ export default class GameScene extends Phaser.Scene {
 		this.lives = data.lives || 3;
 		this.level = data.level || 1;
 		this.score = data.score || 0;
-		this.chanceOfNasty = 0.3 + 0.05 * this.level;
+		this.chanceOfNasty = CHANCE_OF_NASTY + 0.05 * this.level;
 	}
 
 	preload() {
@@ -127,6 +128,9 @@ export default class GameScene extends Phaser.Scene {
 		this.input.on("pointermove", this.onPointerMove.bind(this));
 		this.input.on("pointerdown", this.onPointerDown.bind(this));
 		this.cameras.main.setBounds(0, 0, WIDTH, HEIGHT);
+		const test = new InvertedNastyBullet(this, 400, 200);
+		// test.die();
+		this.bullets.push(test);
 	}
 
 	bendTime() {
@@ -361,13 +365,11 @@ export default class GameScene extends Phaser.Scene {
 			ball.body.setVelocityX(2 + Math.random() * 8);
 		}
 		ball.onHitPaddle(paddle);
-		// if (ball.getData("type") === "inverted-nasty") {
-		// 	ball.destroy();
-		// }
 	}
 
 	update(gameTime, delta) {
 		this.paddle.update();
+		this.bullets.forEach((bullet) => bullet.update(gameTime, delta));
 		this.timeBender.update(gameTime, delta);
 		if (this.ball.y > 400) {
 			this.die();

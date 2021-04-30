@@ -12,6 +12,8 @@ export default class Bullet extends Phaser.GameObjects.Arc {
 
 	onHitBrick(brick) {}
 
+	onUpdate(gameTime, delta) {}
+
 	destroy() {
 		if (this.emitter) {
 			this.emitter.stop();
