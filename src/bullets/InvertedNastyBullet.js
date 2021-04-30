@@ -1,8 +1,7 @@
-import Bullet from "./Bullet";
-import { BALL_RADIUS, GREEN, AMBER } from "../consts";
+import { BALL_RADIUS } from "../consts";
 
 const COLOR = 0x000000;
-const HIT_POINTS = 4;
+const HIT_POINTS = 3;
 const HIT_POINTS_CIRCLES_RADIUS = 2;
 const HIT_POINTS_CIRCLES_ALPHA = 0.6;
 
@@ -92,8 +91,10 @@ export default class InvertedNastyBullet extends Phaser.GameObjects.Container {
 
 	onHitPaddle(paddle) {
 		this.hitPoints -= 1;
-		this.hitPointsCircles[this.hitPoints].destroy();
-		if (this.hitPoints === 0) {
+		if (this.hitPointsCircles[this.hitPoints]) {
+			this.hitPointsCircles[this.hitPoints].destroy();
+		}
+		if (this.hitPoints < 1) {
 			this.die();
 		}
 	}
