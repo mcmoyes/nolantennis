@@ -1,15 +1,34 @@
 import Bullet from "./Bullet";
-import { BALL_RADIUS, GREEN } from "../consts";
+import { BALL_RADIUS, GREEN, AMBER } from "../consts";
 
 const COLOR = 0x000000;
-const HIT_POINTS = 3;
+const HIT_POINTS = 4;
 const HIT_POINTS_CIRCLES_RADIUS = 2;
-const HIT_POINTS_CIRCLES_ALPHA = 0.4;
+const HIT_POINTS_CIRCLES_ALPHA = 0.6;
 
-export default class InvertedNastyBullet extends Bullet {
+export default class InvertedNastyBullet extends Phaser.GameObjects.Container {
 	constructor(scene, x, y) {
-		super(scene, x, y, BALL_RADIUS, COLOR, 1);
-		this.setStrokeStyle(2, 0xffffff, 1);
+		const circle = new Phaser.GameObjects.Arc(
+			scene,
+			0,
+			0,
+			BALL_RADIUS,
+			0,
+			360,
+			false,
+			COLOR,
+			1
+		);
+		super(scene, x, y, [circle]);
+		this.circle = circle;
+		this.circle.setStrokeStyle(2, 0xffffff, 1);
+		this.circle.setDepth(10);
+
+		scene.add.existing(this);
+		this.setSize(BALL_RADIUS * 2, BALL_RADIUS * 2);
+		scene.physics.add.existing(this);
+		this.body.setCollideWorldBounds(true);
+		this.body.setBounce(1);
 		this.setData("type", "inverted-nasty");
 
 		this.particles = this.scene.add.particles("circle");
@@ -24,8 +43,6 @@ export default class InvertedNastyBullet extends Bullet {
 			on: true,
 		});
 
-		this.hitPointsContainer = this.scene.add.container(this.x, this.y);
-
 		this.hitPoints = HIT_POINTS;
 		this.hitPointsCircles = [];
 
@@ -38,19 +55,19 @@ export default class InvertedNastyBullet extends Bullet {
 				HIT_POINTS_CIRCLES_ALPHA
 			);
 			this.hitPointsCircles.push(circle);
-			this.hitPointsContainer.add(circle);
+			this.add(circle);
 		}
 		this.positionHitpoints(0);
 		this.scene.tweens.add({
-			targets: this.hitPointsContainer,
+			targets: this,
 			rotation: 2 * Math.PI,
 			loop: -1,
-			duration: 500,
+			duration: 450,
 		});
 	}
 
 	positionHitpoints(t) {
-		const r = BALL_RADIUS + 2 + HIT_POINTS_CIRCLES_RADIUS;
+		const r = BALL_RADIUS + HIT_POINTS_CIRCLES_RADIUS;
 
 		for (let i = 0; i < this.hitPoints; i++) {
 			const theta = (i * 2 * Math.PI + t) / this.hitPoints;
@@ -63,9 +80,8 @@ export default class InvertedNastyBullet extends Bullet {
 	update(gameTime, delta) {
 		// this.updateDisplayOrigin();
 		if (this.body) {
-			this.hitPointsContainer.x = this.x;
-			this.hitPointsContainer.y = this.y;
-
+			// this.hitPointsContainer.x = this.x;
+			// this.hitPointsContainer.y = this.y;
 			// if (this.body.velocity.x < 0) {
 			// 	this.hitPointsContainer.rotation -= 0.4;
 			// } else {
@@ -75,7 +91,6 @@ export default class InvertedNastyBullet extends Bullet {
 	}
 
 	onHitPaddle(paddle) {
-		super.onHitPaddle(paddle);
 		this.hitPoints -= 1;
 		this.hitPointsCircles[this.hitPoints].destroy();
 		if (this.hitPoints === 0) {
@@ -106,8 +121,10 @@ export default class InvertedNastyBullet extends Bullet {
 		// this.destroy();
 	}
 
+	onHitBrick(brick) {}
+
 	destroy() {
-		this.hitPointsContainer.destroy();
+		this.particles.destroy();
 		super.destroy();
 	}
 }

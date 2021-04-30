@@ -14,6 +14,9 @@ const config = {
 	scene: [IntroScene, GameScene, GameOverScene],
 	physics: {
 		default: "arcade",
+		arcade: {
+			// debug: true,
+		},
 	},
 	audio: {
 		disableWebAudio: false,

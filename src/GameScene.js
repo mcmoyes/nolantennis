@@ -128,9 +128,9 @@ export default class GameScene extends Phaser.Scene {
 		this.input.on("pointermove", this.onPointerMove.bind(this));
 		this.input.on("pointerdown", this.onPointerDown.bind(this));
 		this.cameras.main.setBounds(0, 0, WIDTH, HEIGHT);
-		const test = new InvertedNastyBullet(this, 400, 200);
+		// const test = new InvertedNastyBullet(this, 400, 200);
 		// test.die();
-		this.bullets.push(test);
+		// this.bullets.push(test);
 	}
 
 	bendTime() {
