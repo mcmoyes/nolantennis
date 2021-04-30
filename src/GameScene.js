@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import Paddle from "./Paddle";
+import PlayerPaddle from "./paddles/PlayerPaddle";
 import { GREEN_DARKER } from "./consts";
 import TimeBender from "./TimeBender";
 import AudioController from "./AudioController";
@@ -7,6 +7,8 @@ import WebFontFile from "./WebFontFile";
 import PlayerBullet from "./bullets/PlayerBullet";
 import InvertedBullet from "./bullets/InvertedBullet";
 import InvertedNastyBullet from "./bullets/InvertedNastyBullet";
+import InversePaddle from "./paddles/InversePaddle";
+import InvertedPaddleBullet from "./bullets/InvertedPaddleBullet";
 
 // grid stuff
 const WIDTH = 800;
@@ -30,6 +32,7 @@ const BALL_INIT = {
 	velocityY: -300,
 };
 
+const CHANCE_OF_INVERTED_PADDLE = 0.1;
 const CHANCE_OF_NASTY = 0.3;
 
 export default class GameScene extends Phaser.Scene {
@@ -59,7 +62,9 @@ export default class GameScene extends Phaser.Scene {
 		this.audioController.createAssets();
 
 		this.bullets = [];
-		this.paddle = new Paddle(this);
+		this.paddles = [];
+
+		this.paddles.push(new PlayerPaddle(this));
 
 		var particles = this.add.particles("pixel");
 
@@ -80,10 +85,7 @@ export default class GameScene extends Phaser.Scene {
 
 		this.ballCounter = 0;
 
-		this.ball = this.createBall(
-			this.paddle.gameObject.x,
-			this.paddle.gameObject.y - 50
-		);
+		this.ball = this.createBall(this.paddles[0].x, this.paddles[0].y - 50);
 		this.bullets.push(this.ball);
 
 		this.ball.setData("onPaddle", true);
@@ -208,7 +210,7 @@ export default class GameScene extends Phaser.Scene {
 	}
 	onPointerMove(pointer) {
 		if (this.ball.getData("onPaddle")) {
-			this.ball.x = this.paddle.gameObject.x;
+			this.ball.x = this.paddles[0].x;
 		}
 	}
 
@@ -236,6 +238,10 @@ export default class GameScene extends Phaser.Scene {
 		} else {
 			this.levelText.text = txt;
 		}
+	}
+
+	createInvertedPaddle() {
+		this.paddles.push(new InversePaddle(this));
 	}
 
 	showScore() {
@@ -271,6 +277,8 @@ export default class GameScene extends Phaser.Scene {
 			ball = new InvertedBullet(this, x, y);
 		} else if (type == "inverted-nasty") {
 			ball = new InvertedNastyBullet(this, x, y);
+		} else if (type == "inverted-paddle") {
+			ball = new InvertedPaddleBullet(this, x, y);
 		}
 		this.ballCounter += 1;
 		ball.setData("id", this.ballCounter);
@@ -278,7 +286,8 @@ export default class GameScene extends Phaser.Scene {
 		this.bricks.forEach((brick) => {
 			const colliderMap = brick.getData("colliderMap");
 			if (
-				(type === "main" && brick.alpha == 1) ||
+				type === "main" ||
+				(type == "inverted-paddle" && brick.alpha == 1) ||
 				(type === "inverted-nasty" && brick.alpha === 0)
 			) {
 				colliderMap[this.ballCounter] = this.physics.add.collider(
@@ -301,13 +310,7 @@ export default class GameScene extends Phaser.Scene {
 			brick.setData("colliderMap", colliderMap);
 		});
 
-		this.physics.add.collider(
-			ball,
-			this.paddle.gameObject,
-			this.hitPaddle,
-			null,
-			this
-		);
+		this.physics.add.collider(ball, this.paddles, this.hitPaddle, null, this);
 
 		if (type === "inverted-nasty") {
 			this.physics.add.collider(ball, this.nastyBouncer, null, null, this);
@@ -368,7 +371,7 @@ export default class GameScene extends Phaser.Scene {
 	}
 
 	update(gameTime, delta) {
-		this.paddle.update();
+		this.paddles.forEach((paddle) => paddle.update(gameTime, delta));
 		this.bullets.forEach((bullet) => bullet.update(gameTime, delta));
 		this.timeBender.update(gameTime, delta);
 		if (this.ball.y > 400) {
@@ -384,6 +387,12 @@ export default class GameScene extends Phaser.Scene {
 		this.audioController.stopBendTime();
 		this.lives -= 1;
 		this.showLives();
+		this.paddles.forEach((paddle, index) => {
+			if (index > 0) {
+				paddle.destroy();
+				this.paddles.splice(1);
+			}
+		});
 
 		if (this.lives == 0) {
 			this.scene.start("GameOverScene", { score: this.score });
@@ -399,10 +408,7 @@ export default class GameScene extends Phaser.Scene {
 			}
 		});
 		this.bullets = [this.ball];
-		this.ball.setPosition(
-			this.paddle.gameObject.x,
-			this.paddle.gameObject.y - 50
-		);
+		this.ball.setPosition(this.paddles[0].x, this.paddles[0].y - 50);
 		this.ball.body.setVelocity(0, 0);
 		this.ball.setData("onPaddle", true);
 	}
@@ -431,7 +437,10 @@ export default class GameScene extends Phaser.Scene {
 		this.audioController.playBwaah();
 		this.resetCamera();
 		let newBall;
-		if (Math.random() <= this.chanceOfNasty) {
+		const rnd = Math.random();
+		if (this.paddles.length == 1 && rnd <= CHANCE_OF_INVERTED_PADDLE) {
+			newBall = this.createBall(this.ball.x, this.ball.y, "inverted-paddle");
+		} else if (rnd <= this.chanceOfNasty) {
 			// create nasty ball
 			newBall = this.createBall(this.ball.x, this.ball.y, "inverted-nasty");
 		} else {
