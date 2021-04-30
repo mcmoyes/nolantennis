@@ -1,7 +1,7 @@
 import { BALL_RADIUS } from "../consts";
 
 const COLOR = 0x000000;
-const HIT_POINTS = 3;
+const HIT_POINTS = 4;
 const HIT_POINTS_CIRCLES_RADIUS = 2;
 const HIT_POINTS_CIRCLES_ALPHA = 0.6;
 

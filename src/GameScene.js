@@ -32,7 +32,7 @@ const BALL_INIT = {
 	velocityY: -300,
 };
 
-const CHANCE_OF_INVERTED_PADDLE = 0.1;
+const CHANCE_OF_INVERTED_PADDLE = 0.25;
 const CHANCE_OF_NASTY = 0.3;
 
 export default class GameScene extends Phaser.Scene {
@@ -438,7 +438,11 @@ export default class GameScene extends Phaser.Scene {
 		this.resetCamera();
 		let newBall;
 		const rnd = Math.random();
-		if (this.paddles.length == 1 && rnd <= CHANCE_OF_INVERTED_PADDLE) {
+		if (
+			this.paddles.length == 1 &&
+			this.bullets.length > 2 &&
+			rnd <= CHANCE_OF_INVERTED_PADDLE
+		) {
 			newBall = this.createBall(this.ball.x, this.ball.y, "inverted-paddle");
 		} else if (rnd <= this.chanceOfNasty) {
 			// create nasty ball
